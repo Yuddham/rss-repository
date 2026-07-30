@@ -3,14 +3,39 @@
   "version": "1.0.0",
   "private": true,
   "description": "Local RSS repository, reader, and consolidated feed generator",
-  "main": "server.js",
+  "main": "electron/main.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "electron": "electron .",
+    "dist": "electron-builder --win nsis"
   },
   "dependencies": {
     "express": "^4.19.2",
     "feed": "^4.2.2",
     "node-cron": "^3.0.3",
     "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.rssrepository.app",
+    "productName": "RSS Repository",
+    "files": [
+      "public/**/*",
+      "src/**/*",
+      "electron/**/*",
+      "server.js",
+      "package.json",
+      "!data/**"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
