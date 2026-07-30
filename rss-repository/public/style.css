@@ -311,6 +311,12 @@ main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
   margin-bottom: 0.85rem;
 }
 
+.public-feed-url-row[hidden] { display: none; }
+.public-feed-url-row .public-feed-url-input { color: var(--unread); }
+
+.tunnel-row { display: flex; align-items: center; gap: 0.9rem; }
+.tunnel-status { font-size: 0.85rem; color: var(--text-muted); }
+
 .feed-url-input {
   flex: 1;
   padding: 0.4rem 0.6rem;

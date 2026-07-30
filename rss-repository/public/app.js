@@ -18,6 +18,8 @@
   const bulkGroupSelect = document.getElementById('bulkGroupSelect');
   const bulkNewGroupName = document.getElementById('bulkNewGroupName');
   const bulkStatus = document.getElementById('bulkStatus');
+  const tunnelStatus = document.getElementById('tunnelStatus');
+  const tunnelToggleBtn = document.getElementById('tunnelToggleBtn');
 
   const NEW_GROUP_VALUE = '__new__';
 
@@ -195,6 +197,17 @@
         setTimeout(() => { e.target.textContent = 'Copy'; }, 1200);
       });
 
+      const publicRow = node.querySelector('.public-feed-url-row');
+      if (group.publicFeedUrl) {
+        publicRow.hidden = false;
+        node.querySelector('.public-feed-url-input').value = group.publicFeedUrl;
+        node.querySelector('.copy-public-btn').addEventListener('click', async (e) => {
+          await navigator.clipboard.writeText(group.publicFeedUrl);
+          e.target.textContent = 'Copied!';
+          setTimeout(() => { e.target.textContent = 'Copy'; }, 1200);
+        });
+      }
+
       node.querySelector('.delete-group-btn').addEventListener('click', async () => {
         if (!confirm(`Delete group "${group.name}" and all its feeds?`)) return;
         await api(`/groups/${group.id}`, { method: 'DELETE' });
@@ -350,6 +363,38 @@
     }
   });
 
+  // ---------- Public access (tunnel) ----------
+
+  function renderTunnelStatus(result) {
+    tunnelToggleBtn.disabled = false;
+    if (result.active) {
+      tunnelStatus.textContent = `Public at ${result.publicUrl}`;
+      tunnelToggleBtn.textContent = 'Stop';
+    } else {
+      tunnelStatus.textContent = 'Not public — running on localhost only.';
+      tunnelToggleBtn.textContent = 'Start';
+    }
+  }
+
+  async function loadTunnelStatus() {
+    const result = await api('/tunnel/status');
+    renderTunnelStatus(result);
+  }
+
+  tunnelToggleBtn.addEventListener('click', async () => {
+    tunnelToggleBtn.disabled = true;
+    const isStarting = tunnelToggleBtn.textContent === 'Start';
+    tunnelStatus.textContent = isStarting ? 'Starting tunnel (this can take up to 30s)…' : 'Stopping…';
+    try {
+      const result = await api(isStarting ? '/tunnel/start' : '/tunnel/stop', { method: 'POST', body: JSON.stringify({}) });
+      renderTunnelStatus(result);
+      await refreshAllData();
+    } catch (err) {
+      tunnelStatus.textContent = err.message;
+      tunnelToggleBtn.disabled = false;
+    }
+  });
+
   // ---------- Data loading ----------
 
   async function refreshAllData() {
@@ -366,4 +411,5 @@
   }
 
   refreshAllData().catch((err) => setStatus(err.message, true));
+  loadTunnelStatus().catch((err) => { tunnelStatus.textContent = err.message; });
 })();

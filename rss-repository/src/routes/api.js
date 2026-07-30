@@ -2,6 +2,7 @@ const express = require('express');
 const store = require('../store');
 const { refreshFeed, refreshGroup, refreshAll } = require('../feedFetcher');
 const { buildExportText } = require('../exportText');
+const tunnel = require('../tunnel');
 
 const router = express.Router();
 
@@ -12,9 +13,11 @@ function feedUrlFor(req, slug) {
 // ---------- Groups ----------
 
 router.get('/groups', (req, res) => {
+  const { publicUrl } = tunnel.status();
   const groups = store.listGroups().map((g) => ({
     ...g,
     feedUrl: feedUrlFor(req, g.slug),
+    publicFeedUrl: publicUrl ? `${publicUrl}/feed/${g.slug}.xml` : null,
   }));
   res.json(groups);
 });
@@ -143,6 +146,25 @@ router.get('/groups/:id/export.txt', (req, res) => {
   res.set('Content-Type', 'text/plain; charset=utf-8');
   res.set('Content-Disposition', `attachment; filename="${group.slug}-export-${timestamp}.txt"`);
   res.send(text);
+});
+
+// ---------- Internet exposure (Cloudflare Tunnel) ----------
+
+router.get('/tunnel/status', (req, res) => {
+  res.json(tunnel.status());
+});
+
+router.post('/tunnel/start', async (req, res) => {
+  try {
+    const result = await tunnel.startTunnel(req.socket.localPort);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/tunnel/stop', (req, res) => {
+  res.json(tunnel.stopTunnel());
 });
 
 // ---------- Refresh ----------

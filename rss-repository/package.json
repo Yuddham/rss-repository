@@ -7,6 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "electron": "electron .",
+    "fetch-cloudflared": "node scripts/fetch-cloudflared.js",
+    "predist": "node scripts/fetch-cloudflared.js",
     "dist": "electron-builder --win nsis"
   },
   "dependencies": {
@@ -28,7 +30,14 @@
       "electron/**/*",
       "server.js",
       "package.json",
-      "!data/**"
+      "!data/**",
+      "!electron/bin/**"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/bin/cloudflared.exe",
+        "to": "bin/cloudflared.exe"
+      }
     ],
     "win": {
       "target": "nsis"

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-This directory contains a single project: `rss-repository/` — a locally-hosted RSS aggregator. It lets a user group arbitrary RSS/Atom feeds together, generates one consolidated RSS 2.0 feed URL per group (merged, newest-first), and serves a minimalist magazine-style reader over the same data. The consolidated feed URLs are meant to be pasted into a Claude Project as a recurring news source, so the app must keep running locally and keep polling on its own.
+This directory contains a single project: `rss-repository/` — an RSS aggregator packaged as an installable Windows desktop app (Electron), also runnable as a plain local web app. It lets a user group arbitrary RSS/Atom feeds together, generates one consolidated RSS 2.0 feed URL per group (merged, newest-first), serves a minimalist magazine-style reader with read/unread tracking, generates per-group `.txt` exports formatted for LLM summarization, and can expose a group's feed to the internet via a Cloudflare quick tunnel (for cloud services like Zapier/Inoreader that can't reach `localhost`). The consolidated feed URLs are meant to be pasted into a Claude Project as a recurring news source, so the app must keep running (locally or as the installed tray app) and keep polling on its own.
 
 ## Version control
 
@@ -15,15 +15,20 @@ Commit and push to GitHub regularly as work progresses — after each meaningful
 All commands run from `rss-repository/`:
 
 ```
-npm install   # pure-JS deps only: express, rss-parser, feed, node-cron
-npm start     # node server.js — serves http://localhost:3838
+npm install            # runtime deps (pure-JS: express, rss-parser, feed, node-cron) + electron/electron-builder devDeps
+npm start               # node server.js — plain dev server at http://localhost:3838, data in data/db.json
+npm run electron        # runs the same app inside an Electron window/tray, data in %APPDATA%\rss-repository
+npm run fetch-cloudflared  # downloads electron/bin/cloudflared.exe (gitignored; needed before packaging)
+npm run dist            # electron-builder --win nsis — builds the Windows installer into dist/ (runs fetch-cloudflared first via predist)
 ```
 
-There are no lint, test, or build scripts/tooling in this project.
+There are no lint or test scripts/tooling in this project.
 
-The dev machine this was built on has no native build tools (no Python/VS Build Tools), so dependencies were deliberately chosen to be pure JavaScript with no native (node-gyp) addons — e.g. storage is a hand-rolled JSON file rather than `better-sqlite3`. Keep that constraint in mind before adding a new dependency.
+No native build tools exist on the dev machine this was built on (no Python/VS Build Tools/Rust), so runtime dependencies were deliberately chosen to be pure JavaScript with no native (node-gyp) addons — e.g. storage is a hand-rolled JSON file rather than `better-sqlite3`. Electron itself ships prebuilt binaries (no compilation needed), which is why it was chosen over alternatives like Tauri for desktop packaging. Keep the no-native-deps constraint in mind before adding a new runtime dependency.
 
-**Restart required for backend changes**: `server.js` and everything under `src/` is loaded once at process start, so changes there need `npm start` restarted to take effect. Everything under `public/` (`index.html`, `style.css`, `app.js`) is served via `express.static` and reflects on a plain browser refresh — no restart needed.
+**Restart required for backend changes**: `server.js` and everything under `src/` is loaded once at process start, so changes there need the process restarted (`npm start` or `npm run electron`) to take effect. Everything under `public/` (`index.html`, `style.css`, `app.js`) is served via `express.static` and reflects on a plain browser refresh — no restart needed.
+
+**Data path**: `src/store.js`'s `DB_PATH` honors an `RSS_DATA_DIR` env var (falls back to `data/db.json` if unset). `electron/main.js` sets this to `app.getPath('userData')` before requiring `server.js`, so the installed app's data lives in `%APPDATA%\rss-repository` rather than next to the (often read-only, Program-Files-installed) executable. `server.js` exports `{ app, startServer }` and only self-starts when run directly (`require.main === module`), so Electron's main process can `require('./server').startServer(port)` in-process instead of spawning a second Node process.
 
 ## Architecture
 
@@ -31,7 +36,7 @@ The dev machine this was built on has no native build tools (no Python/VS Build 
 A single in-memory object (`{ groups, feeds, articles }`) is loaded from `data/db.json` on boot and persisted back via a 250ms-debounced `fs.writeFile` after every mutation. There is no database — all CRUD helpers (`createGroup`, `addFeed`, `mergeArticles`, etc.) live in this one module and mutate the in-memory object directly.
 
 - Each **group** gets a URL-safe `slug` (derived from its name, de-duplicated against existing slugs) — this slug is what the consolidated feed route (`/feed/:slug.xml`) matches on.
-- **Articles** are deduplicated per-feed by `guid` (falling back to `link`) in `mergeArticles` — re-fetching a feed only inserts genuinely new items.
+- **Articles** are deduplicated per-feed by `guid` (falling back to `link`) in `mergeArticles` — re-fetching a feed only inserts genuinely new items. Each article also has a `read` boolean (default `false`); `setArticleRead`/`markAllRead` mutate it, and `listArticles` accepts `unreadOnly`/`from`/`to` filters used by both the magazine view and the export route.
 - Deleting a group or feed cascades: `deleteGroup` removes its feeds and their articles; `deleteFeed` removes its articles.
 
 ### Fetch pipeline (`src/feedFetcher.js` + `src/scheduler.js`)

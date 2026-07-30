@@ -57,6 +57,17 @@
         <div id="bulkStatus" class="status"></div>
       </div>
 
+      <div class="panel">
+        <h2>Public access</h2>
+        <p class="panel-hint">
+          Expose your feeds to the internet via a free Cloudflare Tunnel, so cloud services like Zapier or Inoreader (or Claude/Gemini's web apps) can fetch a group's feed directly. This uses Cloudflare's no-signup "quick tunnel" — the public address is random and <strong>changes every time you restart it</strong>, so re-point any automation after a restart. It's also unauthenticated: treat a public feed URL as effectively public once you share it.
+        </p>
+        <div class="tunnel-row">
+          <span id="tunnelStatus" class="tunnel-status">Checking…</span>
+          <button id="tunnelToggleBtn" class="refresh-btn" disabled>Start</button>
+        </div>
+      </div>
+
       <div id="groupsPanel" class="groups-panel"></div>
     </div>
   </section>
@@ -74,6 +85,10 @@
     <div class="feed-url-row">
       <input type="text" class="feed-url-input" readonly />
       <button class="copy-btn">Copy</button>
+    </div>
+    <div class="feed-url-row public-feed-url-row" hidden>
+      <input type="text" class="public-feed-url-input" readonly />
+      <button class="copy-public-btn">Copy</button>
     </div>
     <ul class="feed-list"></ul>
     <form class="add-feed-form inline-form">
