@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const DB_PATH = path.join(__dirname, '..', 'data', 'db.json');
+const DB_PATH = process.env.RSS_DATA_DIR
+  ? path.join(process.env.RSS_DATA_DIR, 'db.json')
+  : path.join(__dirname, '..', 'data', 'db.json');
 
 const EMPTY_DB = { groups: [], feeds: [], articles: [] };
 
@@ -137,13 +139,44 @@ function deleteFeed(id) {
 
 // ---------- Articles ----------
 
-function listArticles({ groupId, limit, offset } = {}) {
+function listArticles({ groupId, limit, offset, unreadOnly, from, to } = {}) {
   let items = db.articles;
   if (groupId) items = items.filter((a) => a.groupId === groupId);
+  if (unreadOnly) items = items.filter((a) => !a.read);
+  if (from) {
+    const fromTime = new Date(from).getTime();
+    items = items.filter((a) => new Date(a.pubDate).getTime() >= fromTime);
+  }
+  if (to) {
+    const toTime = new Date(to).getTime();
+    items = items.filter((a) => new Date(a.pubDate).getTime() <= toTime);
+  }
   items = [...items].sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
   const start = offset ? Number(offset) : 0;
   const end = limit ? start + Number(limit) : undefined;
   return items.slice(start, end);
+}
+
+function setArticleRead(id, read) {
+  const article = db.articles.find((a) => a.id === id);
+  if (!article) return null;
+  article.read = Boolean(read);
+  scheduleSave();
+  return article;
+}
+
+function markAllRead({ groupId } = {}) {
+  let items = db.articles;
+  if (groupId) items = items.filter((a) => a.groupId === groupId);
+  let count = 0;
+  for (const article of items) {
+    if (!article.read) {
+      article.read = true;
+      count++;
+    }
+  }
+  if (count > 0) scheduleSave();
+  return count;
 }
 
 function mergeArticles(feedId, groupId, parsedItems) {
@@ -168,6 +201,7 @@ function mergeArticles(feedId, groupId, parsedItems) {
       pubDate: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
       guid,
       fetchedAt: new Date().toISOString(),
+      read: false,
     });
     added++;
   }
@@ -187,6 +221,8 @@ module.exports = {
   updateFeed,
   deleteFeed,
   listArticles,
+  setArticleRead,
+  markAllRead,
   mergeArticles,
   saveNow,
 };

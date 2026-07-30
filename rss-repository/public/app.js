@@ -9,6 +9,7 @@
   const emptyState = document.getElementById('emptyState');
   const statusEl = document.getElementById('status');
   const refreshBtn = document.getElementById('refreshBtn');
+  const markAllReadBtn = document.getElementById('markAllReadBtn');
   const groupsPanel = document.getElementById('groupsPanel');
   const newGroupForm = document.getElementById('newGroupForm');
   const newGroupName = document.getElementById('newGroupName');
@@ -96,6 +97,9 @@
 
     for (const article of articles) {
       const node = articleCardTpl.content.cloneNode(true);
+      const card = node.querySelector('.article-card');
+      card.classList.toggle('is-unread', !article.read);
+
       const imageDiv = node.querySelector('.article-image');
       if (article.imageUrl) {
         imageDiv.style.backgroundImage = `url("${article.imageUrl}")`;
@@ -103,11 +107,30 @@
       const group = state.groups.find((g) => g.id === article.groupId);
       node.querySelector('.article-group').textContent = group ? group.name : '';
       node.querySelector('.article-date').textContent = timeAgo(article.pubDate);
+
+      const unreadToggle = node.querySelector('.unread-toggle');
+      unreadToggle.classList.toggle('is-unread', !article.read);
+      unreadToggle.addEventListener('click', async () => {
+        const nowRead = !article.read;
+        await api(`/articles/${article.id}/read`, { method: 'POST', body: JSON.stringify({ read: nowRead }) });
+        article.read = nowRead;
+        card.classList.toggle('is-unread', !nowRead);
+        unreadToggle.classList.toggle('is-unread', !nowRead);
+      });
+
       const link = node.querySelector('.article-title a');
       link.textContent = article.title;
       link.href = article.link || '#';
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
+      link.addEventListener('click', () => {
+        if (article.read) return;
+        api(`/articles/${article.id}/read`, { method: 'POST', body: JSON.stringify({ read: true }) }).catch(() => {});
+        article.read = true;
+        card.classList.remove('is-unread');
+        unreadToggle.classList.remove('is-unread');
+      });
+
       node.querySelector('.article-snippet').textContent = article.contentSnippet || '';
       node.querySelector('.article-source').textContent = article.author || '';
       articleGrid.appendChild(node);
@@ -119,6 +142,28 @@
     const articles = await api(`/articles${qs}`);
     renderArticles(articles);
   }
+
+  markAllReadBtn.addEventListener('click', async () => {
+    const scopeLabel = state.activeGroupId
+      ? (state.groups.find((g) => g.id === state.activeGroupId) || {}).name
+      : 'all groups';
+    if (!confirm(`Mark all articles in ${scopeLabel} as read?`)) return;
+    markAllReadBtn.disabled = true;
+    try {
+      const targetGroupIds = state.activeGroupId ? [state.activeGroupId] : state.groups.map((g) => g.id);
+      let marked = 0;
+      for (const groupId of targetGroupIds) {
+        const result = await api(`/groups/${groupId}/mark-all-read`, { method: 'POST', body: JSON.stringify({}) });
+        marked += result.marked;
+      }
+      setStatus(`Marked ${marked} article(s) as read.`);
+      await loadArticles();
+    } catch (err) {
+      setStatus(err.message, true);
+    } finally {
+      markAllReadBtn.disabled = false;
+    }
+  });
 
   refreshBtn.addEventListener('click', async () => {
     refreshBtn.disabled = true;
@@ -167,6 +212,30 @@
         });
         feedList.appendChild(feedNode);
       }
+
+      const exportForm = node.querySelector('.export-form');
+      const exportRangeRow = node.querySelector('.export-range-row');
+      node.querySelector('.export-toggle-btn').addEventListener('click', () => {
+        exportForm.hidden = !exportForm.hidden;
+      });
+      exportForm.querySelectorAll('input[name="exportScope"]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+          exportRangeRow.hidden = exportForm.querySelector('input[name="exportScope"]:checked').value !== 'range';
+        });
+      });
+      exportForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const scope = exportForm.querySelector('input[name="exportScope"]:checked').value;
+        const from = exportForm.querySelector('.export-from').value;
+        const to = exportForm.querySelector('.export-to').value;
+        const markRead = exportForm.querySelector('.export-mark-read').checked;
+        const params = new URLSearchParams({ scope, markRead: String(markRead) });
+        if (scope === 'range') {
+          if (from) params.set('from', from);
+          if (to) params.set('to', to);
+        }
+        window.location.href = `/api/groups/${group.id}/export.txt?${params.toString()}`;
+      });
 
       const addFeedForm = node.querySelector('.add-feed-form');
       addFeedForm.addEventListener('submit', async (e) => {

@@ -21,7 +21,10 @@
       <div id="groupChips" class="chips">
         <button class="chip active" data-group="">All</button>
       </div>
-      <button id="refreshBtn" class="refresh-btn">Refresh now</button>
+      <div class="controls-actions">
+        <button id="markAllReadBtn" class="refresh-btn">Mark all as read</button>
+        <button id="refreshBtn" class="refresh-btn">Refresh now</button>
+      </div>
     </div>
     <div id="status" class="status"></div>
     <div id="articleGrid" class="article-grid"></div>
@@ -63,7 +66,10 @@
   <div class="group-card">
     <div class="group-card-header">
       <h3 class="group-name"></h3>
-      <button class="delete-group-btn" title="Delete group">Delete</button>
+      <div class="group-card-actions">
+        <button class="export-toggle-btn">Export…</button>
+        <button class="delete-group-btn" title="Delete group">Delete</button>
+      </div>
     </div>
     <div class="feed-url-row">
       <input type="text" class="feed-url-input" readonly />
@@ -73,6 +79,21 @@
     <form class="add-feed-form inline-form">
       <input type="url" class="add-feed-input" placeholder="https://example.com/rss.xml" required />
       <button type="submit">Add feed</button>
+    </form>
+
+    <form class="export-form" hidden>
+      <p class="panel-hint">Generate a .txt document of this group's articles, formatted for feeding into an LLM (Claude, Gemini, etc.) to summarize.</p>
+      <div class="export-scope-row">
+        <label><input type="radio" name="exportScope" value="unread" checked /> Unread only</label>
+        <label><input type="radio" name="exportScope" value="all" /> All articles</label>
+        <label><input type="radio" name="exportScope" value="range" /> Date range</label>
+      </div>
+      <div class="export-range-row" hidden>
+        <label>From <input type="date" class="export-from" /></label>
+        <label>To <input type="date" class="export-to" /></label>
+      </div>
+      <label class="export-mark-read-row"><input type="checkbox" class="export-mark-read" checked /> Mark exported articles as read</label>
+      <button type="submit">Generate document</button>
     </form>
   </div>
 </template>
@@ -92,6 +113,7 @@
       <div class="article-meta">
         <span class="article-group"></span>
         <span class="article-date"></span>
+        <button class="unread-toggle" title="Toggle read/unread"></button>
       </div>
       <h3 class="article-title"><a></a></h3>
       <p class="article-snippet"></p>

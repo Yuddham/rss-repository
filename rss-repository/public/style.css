@@ -8,6 +8,7 @@
   --accent-contrast: #ffffff;
   --chip-bg: #f0f0f0;
   --danger: #b3261e;
+  --unread: #2563eb;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,6 +22,7 @@
     --accent-contrast: #121212;
     --chip-bg: #232323;
     --danger: #ff6b61;
+    --unread: #5b9dff;
   }
 }
 
@@ -84,6 +86,8 @@ main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
 
 .chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
+.controls-actions { display: flex; gap: 0.6rem; }
+
 .chip {
   border: 1px solid var(--border);
   background: var(--surface);
@@ -130,11 +134,15 @@ main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
 .article-card {
   background: var(--surface);
   border: 1px solid var(--border);
+  border-left: 3px solid transparent;
   border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
+
+.article-card.is-unread { border-left-color: var(--unread); }
+.article-card.is-unread .article-title a { font-weight: 700; }
 
 .article-image {
   width: 100%;
@@ -150,12 +158,29 @@ main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
 
 .article-meta {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
   font-size: 0.72rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
+
+.article-meta .article-date { margin-right: auto; }
+
+.unread-toggle {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.unread-toggle.is-unread { background: var(--unread); border-color: var(--unread); }
 
 .article-title { margin: 0; font-size: 1.02rem; line-height: 1.3; }
 .article-title a { color: var(--text); text-decoration: none; }
@@ -259,6 +284,17 @@ main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
 
 .group-name { margin: 0; font-size: 1.05rem; }
 
+.group-card-actions { display: flex; align-items: center; gap: 1rem; }
+
+.export-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.8rem;
+  text-decoration: underline;
+}
+
 .delete-group-btn, .delete-feed-btn {
   background: none;
   border: none;
@@ -307,6 +343,51 @@ main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
 
 .feed-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .feed-error { color: var(--danger); font-size: 0.75rem; }
+
+.export-form {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.export-form[hidden] { display: none; }
+
+.export-scope-row, .export-range-row {
+  display: flex;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.export-range-row[hidden] { display: none; }
+
+.export-range-row input {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.85rem;
+  margin-left: 0.3rem;
+}
+
+.export-mark-read-row { font-size: 0.85rem; }
+
+.export-form button[type="submit"] {
+  align-self: flex-start;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.export-form button[type="submit"]:hover { background: var(--chip-bg); }
 
 @media (max-width: 640px) {
   .topbar, main { padding-left: 1rem; padding-right: 1rem; }
