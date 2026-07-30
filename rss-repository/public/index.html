@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RSS Repository</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="topbar">
+  <h1>RSS Repository</h1>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="magazine">Magazine</button>
+    <button class="tab-btn" data-tab="manage">Manage</button>
+  </nav>
+</header>
+
+<main>
+  <section id="magazine" class="view active">
+    <div class="controls">
+      <div id="groupChips" class="chips">
+        <button class="chip active" data-group="">All</button>
+      </div>
+      <button id="refreshBtn" class="refresh-btn">Refresh now</button>
+    </div>
+    <div id="status" class="status"></div>
+    <div id="articleGrid" class="article-grid"></div>
+    <div id="emptyState" class="empty-state" hidden>
+      No articles yet. Add a group and some feeds in the Manage tab.
+    </div>
+  </section>
+
+  <section id="manage" class="view">
+    <div class="manage-layout">
+      <div class="panel">
+        <h2>New group</h2>
+        <form id="newGroupForm" class="inline-form">
+          <input type="text" id="newGroupName" placeholder="e.g. Tech News" required />
+          <button type="submit">Create group</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Bulk add feeds</h2>
+        <p class="panel-hint">Paste RSS/Atom links from as many different sites as you like (one per line), then club them all into a single group.</p>
+        <form id="bulkAddForm">
+          <textarea id="bulkUrls" rows="5" placeholder="https://example.com/rss.xml&#10;https://another-site.com/feed&#10;https://a-third-site.org/atom.xml" required></textarea>
+          <div class="bulk-form-row">
+            <select id="bulkGroupSelect"></select>
+            <input type="text" id="bulkNewGroupName" placeholder="New group name" hidden />
+            <button type="submit">Add all to group</button>
+          </div>
+        </form>
+        <div id="bulkStatus" class="status"></div>
+      </div>
+
+      <div id="groupsPanel" class="groups-panel"></div>
+    </div>
+  </section>
+</main>
+
+<template id="groupCardTemplate">
+  <div class="group-card">
+    <div class="group-card-header">
+      <h3 class="group-name"></h3>
+      <button class="delete-group-btn" title="Delete group">Delete</button>
+    </div>
+    <div class="feed-url-row">
+      <input type="text" class="feed-url-input" readonly />
+      <button class="copy-btn">Copy</button>
+    </div>
+    <ul class="feed-list"></ul>
+    <form class="add-feed-form inline-form">
+      <input type="url" class="add-feed-input" placeholder="https://example.com/rss.xml" required />
+      <button type="submit">Add feed</button>
+    </form>
+  </div>
+</template>
+
+<template id="feedItemTemplate">
+  <li class="feed-item">
+    <span class="feed-title"></span>
+    <span class="feed-error"></span>
+    <button class="delete-feed-btn" title="Remove feed">&times;</button>
+  </li>
+</template>
+
+<template id="articleCardTemplate">
+  <article class="article-card">
+    <div class="article-image"></div>
+    <div class="article-body">
+      <div class="article-meta">
+        <span class="article-group"></span>
+        <span class="article-date"></span>
+      </div>
+      <h3 class="article-title"><a></a></h3>
+      <p class="article-snippet"></p>
+      <div class="article-source"></div>
+    </div>
+  </article>
+</template>
+
+<script src="app.js"></script>
+</body>
+</html>

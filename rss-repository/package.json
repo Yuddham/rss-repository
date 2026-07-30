@@ -1,0 +1,16 @@
+{
+  "name": "rss-repository",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local RSS repository, reader, and consolidated feed generator",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "feed": "^4.2.2",
+    "node-cron": "^3.0.3",
+    "rss-parser": "^3.13.0"
+  }
+}
