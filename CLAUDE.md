@@ -85,7 +85,7 @@ All dependencies are pure-Python wheels with no external binaries or compiled ex
 ### Architecture
 
 #### Data layer (`app/db.py`)
-Single local SQLite file (`data/job_search.db`), no ORM — plain `sqlite3` with `CREATE TABLE IF NOT EXISTS` run idempotently at startup. Tables: `profile_*` (parsed LinkedIn export), `search_criteria`, `manual_listings`, `contacts` / `job_leads` (manual outreach tracking), `cv_documents` / `cv_ats_reports`, `target_jobs` / `cv_tailoring_reports`, `salary_estimates`.
+Single local SQLite file (`data/job_search.db`), no ORM — plain `sqlite3` with `CREATE TABLE IF NOT EXISTS` run idempotently at startup. Tables: `profile_*` (parsed LinkedIn export, incl. `profile_projects`), `search_criteria`, `manual_listings`, `contacts` / `job_leads` (manual outreach tracking), `cv_documents` / `cv_ats_reports`, `target_jobs` / `cv_tailoring_reports`, `salary_estimates`.
 
 #### Profile ingestion (`app/linkedin_export.py`)
 Defensively parses the ZIP from LinkedIn's "Download your data" export — case-insensitive filename/column matching, per-row `raw_json` catch-all for unmapped columns, missing files degrade to a warning rather than a crash. Re-upload does a full delete-and-replace of the profile tables (current-snapshot semantics, not a merge).
